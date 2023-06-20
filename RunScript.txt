@@ -1,0 +1,61 @@
+---
+
+# Initialization Script
+
+docker pull container-registry.oracle.com/mysql/community-server:latest
+docker network create --subnet 172.20.0.0/16 --ip-range 172.20.240.0/20 test-docker-net
+
+docker build -t "web-app-image" ./Websvr
+docker run --name=web-app --network=test-docker-net --ip 172.20.0.1 -d web-app-image
+docker run --name=dtb-app --network=test-docker-net --ip 172.20.0.2 -d container-registry.oracle.com/mysql/community-server:latest
+
+docker logs dtb-app 2>&1 | grep GENERATED
+
+docker exec -it web-app web-app-image --host=dtb-app --user=user --password=Password1
+
+
+docker run --rm mysql:8 cat /etc/mysql/my.cnf > my.cnf
+
+---
+
+# SQL Server
+
+sh-4.4# mysql -u root -p
+mysql> ALTER USER 'root'@'localhost' IDENTIFIED BY 'new_password';
+mysql> CREATE DATABASE test;
+mysql> SHOW DATABASES;
+mysql> USE test;
+mysql> SHOW TABLES;
+mysql> CREATE TABLE test( ID INT PRIMARY KEY AUTO_INCREMENT, Name VARCHAR(255) );
+mysql> DESCRIBE <table_name>;
+mysql> QUIT;
+
+---
+
+# Python Server
+python
+
+import mysql.connector
+
+config = {
+  'user': 'user',
+  'password': 'password',
+  'host': 'dtb-app',
+  'database': 'test',
+  'raise_on_warnings': True
+}
+
+
+cnx = mysql.connector.connect(**config)
+cur = cnx.cursor()
+cur.execute("SELECT * FROM test;")
+
+cur.execute( "CREATE TABLE test ( ID INT PRIMARY KEY AUTO_INCREMENT, FName VARCHAR(255), LName VARCHAR(255) );" )
+cur.execute("INSERT INTO test (FName, LName) VALUES ('lname', 'fname');")
+cur.execute("SELECT * FROM test;")
+
+for i in cur:
+  print(i)
+
+cur.close()
+cnx.close()

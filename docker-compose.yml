@@ -1,0 +1,58 @@
+version: "3"
+name: web-app-stack
+services:
+
+  web-app:
+    container_name: web-app
+    build: ./WWW
+    environment:
+      FLASK_DEBUG: "true"
+    networks:
+      backend-net:
+        ipv4_address: 10.20.0.2
+
+  dtb-app:
+    # https://snapshooter.com/learn/mysql/mysql-incremental-backup
+    image: "container-registry.oracle.com/mysql/community-server:latest"
+    container_name: dtb-app
+    environment:
+      - MYSQL_DATABASE=test
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=/run/secrets/MYSQL_AUTH
+      - MYSQL_ROOT_HOST=10.20.0.2
+    volumes:
+      - ./SQL/Data:/var/lib/mysql
+      - ./SQL/Config:/etc/my.cnf.d
+      - ./SQL/Logs:/var/log/mysql
+
+    networks:
+      backend-net:
+        ipv4_address: 10.20.0.3
+
+  rev-prox:
+    # https://github.com/Wowu/docker-rollout
+    # or
+    # https://linuxhandbook.com/update-docker-container-zero-downtime/
+    image: nginx:alpine
+    depends_on:
+      - web-app
+    ports:
+      - "80:80"
+    volumes:
+      # - ./NGINX/pages:/usr/share/nginx/html:ro
+      - ./NGINX/config:/etc/nginx/conf.d
+      - ./NGINX/logs:/var/log/nginx
+    networks:
+      backend-net:
+        ipv4_address: 10.20.0.4
+
+networks:
+  backend-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.20.0.0/16
+
+secrets:
+  MYSQL_AUTH:
+    file: ./SQL/MYSQL_Auth.txt
