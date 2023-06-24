@@ -27,8 +27,8 @@ skip-name-resolve
 datadir=/var/lib/mysql
 socket=/var/lib/mysql/mysql.sock
 secure-file-priv=/var/lib/mysql-files
-user=mysql
-
+# user=mysql
+bind-address = 0.0.0.0
 pid-file=/var/run/mysqld/mysqld.pid
 
 log_bin = /var/log/mysql/mysql-bin.log expire_logs_days = 10

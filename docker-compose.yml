@@ -10,7 +10,6 @@ services:
     networks:
       backend-net:
         ipv4_address: 10.20.0.2
-
   dtb-app:
     # https://snapshooter.com/learn/mysql/mysql-incremental-backup
     image: "container-registry.oracle.com/mysql/community-server:latest"
@@ -21,10 +20,11 @@ services:
       - MYSQL_PASSWORD=/run/secrets/MYSQL_AUTH
       - MYSQL_ROOT_HOST=10.20.0.2
     volumes:
-      - ./SQL/Data:/var/lib/mysql
+      # - ./SQL/Data:/var/lib/mysql
       - ./SQL/Config:/etc/my.cnf.d
-      - ./SQL/Logs:/var/log/mysql
-
+      # - ./SQL/Logs:/var/log/mysql
+    # command:
+    #   --storage-driver=overlay2
     networks:
       backend-net:
         ipv4_address: 10.20.0.3
@@ -39,9 +39,11 @@ services:
     ports:
       - "80:80"
     volumes:
-      # - ./NGINX/pages:/usr/share/nginx/html:ro
+      - ./NGINX/pages:/usr/share/nginx/html:ro
       - ./NGINX/config:/etc/nginx/conf.d
       - ./NGINX/logs:/var/log/nginx
+    # command:
+    #   --storage-driver=overlay2
     networks:
       backend-net:
         ipv4_address: 10.20.0.4
